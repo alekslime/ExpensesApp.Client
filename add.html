@@ -5,8 +5,121 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add expense</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-  <link rel="stylesheet" href="styles/site.css">
-  <link rel="stylesheet" href="css/expense-features.css">
+  <style>
+/* Small additions on top of Bootstrap (loaded from cdnjs in each page). */
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bs-body-tertiary-bg, #f8f9fa);
+}
+
+main {
+  flex: 1;
+}
+
+/* Live clock in the navbar */
+.clock {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stat cards */
+.stat-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--bs-secondary-color);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.stat-value.stat-small {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Toast message shown by JavaScript */
+.toast-message {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%) translateY(1rem);
+  padding: 0.6rem 1.2rem;
+  background: var(--bs-dark);
+  color: #fff;
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1080;
+}
+
+.toast-message.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- layout ---- */
+.container{width:100%;max-width:960px;margin:0 auto;padding:0 1rem}
+.page{padding-top:1.5rem;padding-bottom:2rem}
+.page.narrow{max-width:640px}
+.page > * + *{margin-top:1.25rem}
+.site-header{background:var(--bs-body-bg,#fff);border-bottom:1px solid var(--bs-border-color,#dee2e6)}
+.header-row{display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;padding-top:.75rem;padding-bottom:.75rem}
+.brand{font-weight:700;font-size:1.2rem;text-decoration:none;color:var(--bs-body-color)}
+.nav{display:flex;gap:1rem;flex-wrap:wrap}
+.nav a{text-decoration:none}
+.nav a.active{font-weight:600;text-decoration:underline}
+.clock{margin:0 0 0 auto;color:var(--bs-secondary-color)}
+.card{padding:1.25rem;background:var(--bs-body-bg,#fff);border:1px solid var(--bs-border-color,#dee2e6);border-radius:var(--bs-border-radius,.375rem)}
+.hero{padding:1rem 0}
+.hero h1{font-size:2rem;font-weight:700}
+.btn-inline{display:inline-block}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem}
+.page-list{margin:0;padding-left:1.2rem}
+.simple-list{padding-left:1.2rem;margin:0 0 .5rem}
+.hint{color:var(--bs-secondary-color);margin:0}
+/* ---- forms ---- */
+.field{margin-bottom:1rem}
+.field label{display:block;font-weight:500;margin-bottom:.25rem}
+.field input,.field select,.toolbar-controls input,.toolbar-controls select,.convert-row select,.convert-row input{
+  display:block;width:100%;padding:.4rem .75rem;font:inherit;color:var(--bs-body-color);
+  background:var(--bs-body-bg,#fff);border:1px solid var(--bs-border-color,#ced4da);border-radius:var(--bs-border-radius,.375rem)}
+.field input:focus,.field select:focus,.toolbar-controls input:focus,.toolbar-controls select:focus{outline:0;border-color:#86b7fe;box-shadow:0 0 0 .25rem rgba(13,110,253,.25)}
+.error{display:block;color:#dc3545;min-height:1.1em;font-size:.85rem}
+/* ---- expenses table ---- */
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
+.toolbar h2{margin:0;font-size:1.35rem}
+.count{color:var(--bs-secondary-color);font-weight:400}
+.toolbar-controls{display:flex;gap:.5rem;flex-wrap:wrap}
+.toolbar-controls input{width:200px}.toolbar-controls select{width:170px}
+.table-wrap{overflow-x:auto}
+.expense-table{width:100%;border-collapse:collapse}
+.expense-table th,.expense-table td{padding:.55rem .6rem;border-bottom:1px solid var(--bs-border-color,#dee2e6);text-align:left}
+.expense-table .num{text-align:right;white-space:nowrap}
+.expense-table .actions{text-align:right;white-space:nowrap}
+.expense-table .actions .btn{margin-left:.25rem;padding:.2rem .6rem;font-size:.85rem;border:1px solid var(--bs-border-color,#ced4da)}
+.expense-table .actions .btn-danger{border-color:#dc3545}
+.empty{margin:1rem 0 0;color:var(--bs-secondary-color)}
+.link-btn{background:none;border:0;padding:0;color:var(--bs-link-color,#0d6efd);text-decoration:underline;cursor:pointer;font:inherit}
+.danger-zone{margin-top:1rem;text-align:right}
+/* ---- modal + toast ---- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:1rem;z-index:1070}
+.modal-overlay.open{display:flex}
+.edit-dialog{background:var(--bs-body-bg,#fff);border-radius:var(--bs-border-radius-lg,.5rem);padding:1.5rem;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.edit-dialog h2{font-size:1.35rem;margin-bottom:1rem}
+.modal-actions{display:flex;justify-content:flex-end;gap:.5rem}
+.modal-actions .btn:not(.btn-primary){border:1px solid var(--bs-border-color,#ced4da)}
+/* ---- currency ---- */
+.convert-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.convert-result{font-size:1.6rem;font-weight:600;margin:.5rem 0}
+@media(max-width:560px){.clock{margin-left:0}.convert-row{grid-template-columns:1fr}.toolbar-controls input,.toolbar-controls select{width:100%}}
+  </style>
 </head>
 <body>
 
@@ -92,6 +205,149 @@
   <div class="toast-message" id="toast"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-  <script src="js/add.js"></script>
+  <script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "expenses";
+  const form = document.getElementById("expense-form");
+  if (!form) return;
+
+  const byId = (id) => document.getElementById(id);
+  const toast = byId("toast");
+  const recentSection = byId("recent");
+  const recentList = byId("recent-list");
+  let toastTimer;
+
+  function getExpenses() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveExpenses(expenses) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+  }
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+  }
+
+  function clearErrors() {
+    form.querySelectorAll(".error").forEach((node) => {
+      node.textContent = "";
+    });
+  }
+
+  function setError(field, message) {
+    const target = form.querySelector(`.error[data-for="${field}"]`);
+    if (target) target.textContent = message;
+  }
+
+  function validate(data) {
+    clearErrors();
+    let valid = true;
+
+    if (!data.title) {
+      setError("title", "Please enter an expense title.");
+      valid = false;
+    } else if (data.title.length > 80) {
+      setError("title", "Title must be 80 characters or fewer.");
+      valid = false;
+    }
+
+    if (!Number.isInteger(data.amount) || data.amount < 1) {
+      setError("amount", "Enter a positive whole amount in Lek.");
+      valid = false;
+    }
+
+    if (!["Food", "Transport", "Books", "Rent", "Fun", "Other"].includes(data.category)) {
+      setError("category", "Please choose a category.");
+      valid = false;
+    }
+
+    if (!data.date || !/^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+      setError("date", "Please choose a valid date.");
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  function localDateString(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function addRecent(expense) {
+    if (!recentSection || !recentList) return;
+
+    recentSection.style.display = "block";
+    const item = document.createElement("li");
+    item.textContent = `${expense.title} — ${expense.amount.toLocaleString()} Lek · ${expense.category} · ${expense.date}`;
+    recentList.prepend(item);
+  }
+
+  const dateInput = byId("date");
+  if (dateInput && !dateInput.value) {
+    dateInput.value = localDateString();
+  }
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const data = {
+      title: byId("title").value.trim(),
+      amount: Number(byId("amount").value),
+      category: byId("category").value,
+      date: byId("date").value
+    };
+
+    if (!validate(data)) return;
+
+    const expenses = getExpenses();
+    const expense = {
+      id: (globalThis.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      ...data
+    };
+
+    expenses.push(expense);
+
+    try {
+      saveExpenses(expenses);
+    } catch (error) {
+      showToast("Could not save. Check your browser storage settings.");
+      console.error(error);
+      return;
+    }
+
+    addRecent(expense);
+    form.reset();
+    clearErrors();
+    if (dateInput) dateInput.value = localDateString();
+    showToast("Expense added successfully.");
+  });
+
+  // Shared header clock.
+  const clock = byId("clock");
+  function updateClock() {
+    if (clock) clock.textContent = new Date().toLocaleTimeString();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+})();
+
+  </script>
 </body>
 </html>
