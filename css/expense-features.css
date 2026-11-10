@@ -1,9 +1,0 @@
-/* Add/Edit expense support. Keeps the existing site design intact. */
-.modal-overlay.open {
-  display: flex;
-}
-
-.toast.show {
-  opacity: 1;
-  visibility: visible;
-}
